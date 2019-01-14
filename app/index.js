@@ -71,19 +71,6 @@ function isObjChanged(obj1, obj2) {
     return false;
 }
 
-function isNodeChanged(dom1, dom2) {
-    if (types.get(dom1) === types.object && types.get(dom2) === types.object) {
-        if (!isObjChanged(dom1.type, dom2.type) && !isObjChanged(dom1.props, dom2.props)
-        ) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    return dom1 !== dom2;
-}
-
 function isNodeChanged2(dom1, dom2) {
     if (types.get(dom1) === types.object && types.get(dom2) === types.object) {
         return dom1.type !== dom2.type;
