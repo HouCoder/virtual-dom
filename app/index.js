@@ -144,16 +144,19 @@ function updateState($parent, oldNode, newNode, index = 0) {
             const allPropsKeys = new Set([...oldPropsKeys, ...newPropsKeys]);
 
             allPropsKeys.forEach((prop) => {
-                // No old prop or different value, set new
-                if (oldProps[prop] === undefined ||
-                    oldProps[prop] !== newProps[prop]
-                ) {
+                // No old prop, set new
+                if (oldProps[prop] === undefined ) {
                     return $currentNode.setAttribute(prop, newProps[prop]);
                 }
 
-                // No new prop, remove old
+                // No new prop, remove old.
                 if (newProps[prop] === undefined) {
-                    return $currentNode.removeAttribute(prop, oldProps[prop]);
+                    return $currentNode.removeAttribute(prop);
+                }
+
+                // Diff value
+                if (oldProps[prop] !== newProps[prop]) {
+                    return $currentNode.setAttribute(prop, newProps[prop]);
                 }
             });
         }
@@ -182,16 +185,11 @@ function updateState($parent, oldNode, newNode, index = 0) {
 
 const activeProfile = <div>
     <div class="profile" id="profile">
-        <div>
-            <h1>Django</h1>
-        </div>
     </div>
 </div>;
 
 const inactiveProfile = <div>
-    <div class="profile" id="profile-tester">
-        <div>
-        </div>
+    <div class="profile" data-user-name="Tonni">
     </div>
 </div>;
 
