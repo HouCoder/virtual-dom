@@ -14,14 +14,8 @@ function generateDom(domObj) {
     }
 
     if (domObj.props) {
-        const propNameMap = {
-            class: 'className',
-        };
-
         Object.keys(domObj.props).forEach((key) => {
-            const attributeName = propNameMap[attributeName] ? propNameMap[attributeName] : key;
-
-            el.setAttribute(attributeName, domObj.props[key]);
+            el.setAttribute(key, domObj.props[key]);
         });
     }
 
@@ -44,7 +38,6 @@ const types = {
     boolean: '[object Boolean]',
 };
 
-// Only works for string and object
 function isObjChanged(obj1, obj2) {
     // Different data types
     if (types.get(obj1) !== types.get(obj2)) {
@@ -75,11 +68,6 @@ function isObjChanged(obj1, obj2) {
         }
     }
 
-    // Diff string
-    if (types.get(obj1) === types.string) {
-        return obj1 !== obj2;
-    }
-
     return false;
 }
 
@@ -96,6 +84,14 @@ function isNodeChanged(dom1, dom2) {
     return dom1 !== dom2;
 }
 
+function isNodeChanged2(dom1, dom2) {
+    if (types.get(dom1) === types.object && types.get(dom2) === types.object) {
+        return dom1.type !== dom2.type;
+    }
+
+    return dom1 !== dom2;
+}
+
 function updateState($parent, oldNode, newNode, index = 0) {
     // Clear empty text node
     if ($parent.childNodes.length === 1 &&
@@ -107,9 +103,11 @@ function updateState($parent, oldNode, newNode, index = 0) {
         $parent.removeChild($parent.childNodes[0]);
     }
 
+    const $currentNode = $parent.childNodes[index];
+
     // No new node, remove old node
     if (!newNode) {
-        return $parent.removeChild($parent.childNodes[index]);
+        return $parent.removeChild($currentNode);
     }
 
     // No old node, append newNode
@@ -117,15 +115,51 @@ function updateState($parent, oldNode, newNode, index = 0) {
         return $parent.appendChild(generateDom(newNode));
     }
 
-    // Different node at the same place, replace oldNode with newNode
-    if (isNodeChanged(oldNode, newNode)) {
+    // node.type or string change
+    if (isNodeChanged2(oldNode, newNode)) {
         return $parent.replaceChild(
             generateDom(newNode),
-            $parent.childNodes[index]
+            $currentNode
         );
     }
 
-    // No change, need to go deeper
+    // old and new are the same string
+    if (oldNode === newNode) {
+        return;
+    }
+
+    // prop change
+    if (isObjChanged(oldNode.props, newNode.props)) {
+        const oldProps = oldNode.props || {};
+        const newProps = newNode.props || {};
+        const oldPropsKeys = Object.keys(oldProps);
+        const newPropsKeys = Object.keys(newProps);
+
+        // New props is null, delete all old.
+        if (newPropsKeys.length === 0) {
+            oldPropsKeys.forEach((prop) => {
+                $currentNode.removeAttribute(prop);
+            });
+        } else {
+            const allPropsKeys = new Set([...oldPropsKeys, ...newPropsKeys]);
+
+            allPropsKeys.forEach((prop) => {
+                // No old prop or different value, set new
+                if (oldProps[prop] === undefined ||
+                    oldProps[prop] !== newProps[prop]
+                ) {
+                    return $currentNode.setAttribute(prop, newProps[prop]);
+                }
+
+                // No new prop, remove old
+                if (newProps[prop] === undefined) {
+                    return $currentNode.removeAttribute(prop, oldProps[prop]);
+                }
+            });
+        }
+    }
+
+    // diff children.
     if ((oldNode.children && oldNode.children.length)
         || (newNode.children && newNode.children.length)
     ) {
@@ -137,7 +171,7 @@ function updateState($parent, oldNode, newNode, index = 0) {
 
         for (let i = 0; i < maxLength; i++) {
             updateState(
-                $parent.childNodes[index],
+                $currentNode,
                 oldNode.children[i],
                 newNode.children[i],
                 i
@@ -148,19 +182,15 @@ function updateState($parent, oldNode, newNode, index = 0) {
 
 const activeProfile = <div>
     <div class="profile" id="profile">
-        Django
+        <div>
+            <h1>Django</h1>
+        </div>
     </div>
-    <h1>Unchained</h1>
 </div>;
 
 const inactiveProfile = <div>
-    <div class="profile" id="profile">
-        Django
+    <div class="profile" id="profile-tester">
         <div>
-            <div>
-                Hello
-                <div class="profile__message">Hello</div>
-            </div>
         </div>
     </div>
 </div>;
