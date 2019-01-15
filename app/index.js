@@ -71,7 +71,7 @@ function isObjChanged(obj1, obj2) {
     return false;
 }
 
-function isNodeChanged2(dom1, dom2) {
+function isNodeChanged(dom1, dom2) {
     if (types.get(dom1) === types.object && types.get(dom2) === types.object) {
         return dom1.type !== dom2.type;
     }
@@ -103,7 +103,7 @@ function updateState($parent, oldNode, newNode, index = 0) {
     }
 
     // node.type or string change
-    if (isNodeChanged2(oldNode, newNode)) {
+    if (isNodeChanged(oldNode, newNode)) {
         return $parent.replaceChild(
             generateDom(newNode),
             $currentNode
@@ -153,11 +153,7 @@ function updateState($parent, oldNode, newNode, index = 0) {
     if ((oldNode.children && oldNode.children.length)
         || (newNode.children && newNode.children.length)
     ) {
-        let maxLength = Math.max.apply(
-            null,
-            [oldNode.children.length,
-            newNode.children.length]
-        );
+        let maxLength = Math.max(oldNode.children.length, newNode.children.length);
 
         for (let i = 0; i < maxLength; i++) {
             updateState(
